@@ -45,3 +45,10 @@ export function iniciarSesion(email, password) {
     body: JSON.stringify({ email, password }),
   });
 }
+
+export function registrarPaciente(datos) {
+  return apiRequest("/api/v1/auth/register", {
+    method: "POST",
+    body: JSON.stringify(datos),
+  });
+}
