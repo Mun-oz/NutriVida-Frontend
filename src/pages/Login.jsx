@@ -1,41 +1,55 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { useAuth } from '../context/AuthContext'; 
+import { iniciarSesion } from '../services/api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errorEmail, setErrorEmail] = useState('');
+  const [errorLogin, setErrorLogin] = useState('');
+  const [enviando, setEnviando] = useState(false);
   
   const navigate = useNavigate();
   const { login } = useAuth(); 
 
-  const handleSubmit = (e) => {
-    e.preventDefault(); // Evita que la página recargue
-    setErrorEmail('');
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorLogin('');
 
-    const allowedDomains = ["@duoc.cl", "@profesor.duoc.cl", "@gmail.com"];
-    const hasValidDomain = allowedDomains.some(domain => email.endsWith(domain));
-
-    if (!hasValidDomain) {
-      setErrorEmail("El correo debe terminar en @duoc.cl, @profesor.duoc.cl o @gmail.com");
-      return; // Detiene la ejecución si hay error
+    if (!email.trim() || !password) {
+      setErrorLogin('Ingresa tu correo y contraseña.');
+      return;
     }
 
-    // Definimos si es administrador o paciente basándonos en el correo
-    const isAdmin = email.endsWith('@profesor.duoc.cl');
-    
-    // Guardamos al usuario en el contexto (y por ende en LocalStorage)
-    login({
-      email: email,
-      rol: isAdmin ? 'admin' : 'paciente'
-    });
+    setEnviando(true);
 
-    // Redirigimos según su rol
-    if (isAdmin) {
-      navigate('/admin/home');
-    } else {
-      navigate('/');
+    try {
+      const respuesta = await iniciarSesion(
+        email.trim(),
+        password
+      );
+
+      login(respuesta);
+
+      if (respuesta.roles.includes('ROLE_ADMIN')) {
+        navigate('/admin/home', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
+
+    } catch (error) {
+      if (error.status === 401) {
+        setErrorLogin('Correo o contraseña incorrectos.');
+      } else if (error.status === 400) {
+        setErrorLogin('Revisa los datos ingresados.');
+      } else {
+        setErrorLogin(
+          'No se pudo iniciar sesión. Verifica la conexión.'
+        );
+      }
+    } finally {
+      setEnviando(false);
     }
   };
 
@@ -74,7 +88,11 @@ export default function Login() {
                       onChange={(e) => setEmail(e.target.value)} 
                       placeholder="ejemplo@gmail.com" 
                     />
-                    {errorEmail && <span className="text-danger small mt-1 d-block fw-bold">{errorEmail}</span>}
+                    {errorLogin && (
+                      <span className="text-danger small mt-1 d-block fw-bold">
+                        {errorLogin}
+                      </span>
+                    )}
                   </div>
 
                   <div className="form-group mb-4">
@@ -88,7 +106,7 @@ export default function Login() {
                     />
                   </div>
 
-                  <button type="submit" className="btn btn-success w-100 fw-bold py-2 shadow-sm">Ingresar</button>
+                  <button  type="submit"  className="btn btn-success w-100 fw-bold py-2 shadow-sm"  disabled={enviando}>  {enviando ? 'Ingresando...' : 'Ingresar'}</button>
                 </form>
 
                 <div className="text-center mt-4">
