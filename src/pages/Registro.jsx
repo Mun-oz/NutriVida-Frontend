@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
-import { validarRut, validarDominioCorreo } from '../utils/validadores';
+import { validarRut } from '../utils/validadores';
+import { registrarPaciente } from '../services/api';
 
 const datosRegiones = [
   { region: "Región Metropolitana", comunas: ["Santiago", "Providencia", "Maipú"] },
@@ -15,6 +16,7 @@ export default function Registro() {
     direccion: '', password: '', confirmPassword: ''
   });
   const [comunasDisponibles, setComunasDisponibles] = useState([]);
+  const [enviandoRegistro, setEnviandoRegistro] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,38 +29,82 @@ export default function Registro() {
     }
   };
 
-  // 2. Lógica de validación antes de procesar el registro
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validar formato y dígito verificador del RUN
-    if (!validarRut(formData.run)) {
-      alert("Error: El RUN ingresado no es válido.");
-      return; // El return detiene la ejecución inmediatamente
-    }
+    const run = formData.run
+      .replace(/[.-]/g, '')
+      .trim()
+      .toUpperCase();
 
-    // Validar dominios de correo permitidos
-    if (!validarDominioCorreo(formData.email)) {
-      alert("Error: El correo debe terminar en @duoc.cl, @profesor.duoc.cl o @gmail.com");
+    const email = formData.email.trim().toLowerCase();
+
+    if (!validarRut(run)) {
+      alert("El RUN ingresado no es válido.");
       return;
     }
 
-    // Validar longitud de la contraseña
-    if (formData.password.length < 4 || formData.password.length > 10) {
-      alert("Error: La contraseña debe tener entre 4 y 10 caracteres.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      alert("Ingresa un correo electrónico válido.");
       return;
     }
 
-    // Validar que las contraseñas coincidan
+    if (
+      !formData.nombre.trim() ||
+      !formData.region ||
+      !formData.comuna ||
+      !formData.direccion.trim()
+    ) {
+      alert("Completa todos los campos obligatorios.");
+      return;
+    }
+
+    if (
+      formData.password.length < 8 ||
+      formData.password.length > 72
+    ) {
+      alert("La contraseña debe tener entre 8 y 72 caracteres.");
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
-      alert("Error: Las contraseñas no coinciden.");
+      alert("Las contraseñas no coinciden.");
       return;
     }
 
-    // Si pasa todas las validaciones, es un éxito
-    alert("¡Registro exitoso! Redirigiendo a inicio de sesión.");
-    navigate('/login');
+    setEnviandoRegistro(true);
+
+    try {
+      const respuesta = await registrarPaciente({
+        run,
+        nombre: formData.nombre.trim(),
+        email,
+        password: formData.password,
+        region: formData.region,
+        comuna: formData.comuna,
+        direccion: formData.direccion.trim()
+      });
+
+      alert(
+        respuesta?.mensaje || "Paciente registrado correctamente."
+      );
+
+      navigate('/login');
+
+    } catch (error) {
+      if (error.status === 409) {
+        alert(error.message);
+      } else if (error.status === 400) {
+        alert("Revisa los datos ingresados.");
+      } else {
+        alert("No se pudo completar el registro. Inténtalo nuevamente.");
+      }
+    } finally {
+      setEnviandoRegistro(false);
+    }
   };
+
 
   return (
     <main className="container d-block my-5">
@@ -115,7 +161,13 @@ export default function Registro() {
             <input id="confirmPassword" type="password" name="confirmPassword" className="form-control" value={formData.confirmPassword} onChange={handleChange} required />
           </div>
 
-          <button type="submit" className="btn btn-success w-100 fw-bold">Registrarse</button>
+          <button
+            type="submit"
+            className="btn btn-success w-100 fw-bold"
+            disabled={enviandoRegistro}
+          >
+            {enviandoRegistro ? 'Registrando...' : 'Registrarse'}
+          </button>
         </form>
         <p className="auth-redirect mt-3 text-center">¿Ya tienes una cuenta? <Link to="/login">Inicia sesión aquí</Link></p>
       </section>
