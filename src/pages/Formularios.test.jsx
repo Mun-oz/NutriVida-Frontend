@@ -4,6 +4,18 @@ import { MemoryRouter } from 'react-router';
 import userEvent from '@testing-library/user-event';
 import Contacto from './Contacto';
 import NuevoCatalogoAdmin from './admin/NuevoCatalogoAdmin';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { crearServicio } from '../services/serviciosService';
+
+vi.mock('../context/AuthContext', () => ({
+  useAuth: () => ({
+    accessToken: 'token-de-prueba'
+  })
+}));
+
+vi.mock('../services/serviciosService', () => ({
+  crearServicio: vi.fn()
+}));
 
 window.alert = vi.fn();
 const mockedUseNavigate = vi.fn();
@@ -48,22 +60,69 @@ describe('Pruebas de Formularios Secundarios', () => {
   });
 
   describe('Formulario de Nuevo Servicio Admin', () => {
-    it('debe guardar el servicio y redirigir al catálogo con banner', async () => {
-      const user = userEvent.setup();
-      render(<MemoryRouter><NuevoCatalogoAdmin /></MemoryRouter>);
 
-      await user.type(screen.getByLabelText(/Nombre del Servicio/i), 'Plan Nutricional');
-      await user.type(screen.getByLabelText(/Descripción/i), 'Plan detallado');
-      await user.type(screen.getByLabelText(/Precio/i), '25000');
-      
-      const btnSubmit = screen.getByText('Guardar Servicio');
-      const form = btnSubmit.closest('form');
-      fireEvent.submit(form);
+  it('debe guardar el servicio y redirigir al catálogo con banner', async () => {
+    const user = userEvent.setup();
 
-      expect(mockedUseNavigate).toHaveBeenCalledWith('/admin/catalogo', { 
-        state: { mensaje: 'Servicio registrado correctamente.' } 
-      });
+    crearServicio.mockResolvedValue({
+      id: 2,
+      codigo: 'NV002',
+      nombre: 'Plan Nutricional',
+      precio: 25000
+    });
+
+    render(
+      <MemoryRouter>
+        <NuevoCatalogoAdmin />
+      </MemoryRouter>
+    );
+
+    await user.type(
+      screen.getByLabelText(/Código del Servicio/i),
+      'NV002'
+    );
+
+    await user.type(
+      screen.getByLabelText(/Nombre del Servicio/i),
+      'Plan Nutricional'
+    );
+
+    await user.type(
+      screen.getByLabelText(/Descripción/i),
+      'Plan detallado'
+    );
+
+    await user.type(
+      screen.getByLabelText(/Precio/i),
+      '25000'
+    );
+
+    fireEvent.submit(
+      screen.getByRole('button', {
+        name: /Guardar Servicio/i
+      }).closest('form')
+    );
+
+    await waitFor(() => {
+      expect(crearServicio).toHaveBeenCalledWith(
+        expect.objectContaining({
+          codigo: 'NV002',
+          nombre: 'Plan Nutricional',
+          precio: 25000
+        }),
+        'token-de-prueba'
+      );
+
+      expect(mockedUseNavigate).toHaveBeenCalledWith(
+        '/admin/catalogo',
+        {
+          state: {
+            mensaje: 'Servicio registrado correctamente.'
+          }
+        }
+      );
     });
   });
 
+});
 });
