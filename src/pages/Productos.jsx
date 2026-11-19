@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { useFetch } from '../hooks/useFetch';
 import { Link } from 'react-router';
-import { SERVICIOS_URL, formatearPrecio, filtrarServicios } from '../services/serviciosService';
+import {
+  SERVICIOS_URL,
+  formatearPrecio,
+  filtrarServicios,
+  obtenerImagenServicio
+} from '../services/serviciosService';
 
 export default function Productos() {
   const { data: catalogo, loading, error } = useFetch(SERVICIOS_URL);
@@ -20,7 +25,7 @@ export default function Productos() {
             type="text"
             // Clases de formulario nativas de Bootstrap
             className="form-control rounded-pill border-secondary px-4 py-2"
-            placeholder="Buscar por nombre o código (ej: Deportivo, CN001)..."
+            placeholder="Buscar por nombre o código (ej: Consulta, NV001)..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
           />
@@ -53,11 +58,16 @@ export default function Productos() {
               <div key={servicio.id} className="col-12 col-md-6 col-lg-3">
                 {/* Componente Card de Bootstrap */}
                 <div className="card h-100 shadow-sm border-0">
-                  <img 
-                    src={`/nutrivida/assets/img/${servicio.img}`} 
-                    className="card-img-top" 
-                    alt={servicio.nombre} 
+                  <img
+                    src={obtenerImagenServicio(servicio)}
+                    className="card-img-top"
+                    alt={servicio.nombre}
                     style={{ height: '200px', objectFit: 'cover' }}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src =
+                        `${import.meta.env.BASE_URL}assets/img/consulta_nutri.jpg`;
+                    }}
                   />
                   
                   <div className="card-body d-flex flex-column">

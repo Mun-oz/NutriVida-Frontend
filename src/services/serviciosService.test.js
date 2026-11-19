@@ -65,4 +65,40 @@ describe('Pruebas sobre serviciosService', () => {
     });
   });
 
+
+  it('debe buscar servicios utilizando el código de MySQL', () => {
+    const servicios = [
+      {
+        id: 1,
+        codigo: 'NV001',
+        nombre: 'Consulta Nutricional',
+        precio: 35000
+      },
+      {
+        id: 2,
+        codigo: 'NV002',
+        nombre: 'Evaluación Inicial',
+        precio: 30000
+      }
+    ];
+
+    const resultado = filtrarServicios(servicios, 'NV002');
+
+    expect(resultado).toHaveLength(1);
+    expect(resultado[0].id).toBe(2);
+  });
+
+  it('debe encontrar un servicio por ID numérico', () => {
+    const servicios = [
+      {
+        id: 1,
+        codigo: 'NV001',
+        nombre: 'Consulta Nutricional'
+      }
+    ];
+
+    expect(obtenerServicioPorId(servicios, 1)?.codigo)
+      .toBe('NV001');
+  });
+
 });

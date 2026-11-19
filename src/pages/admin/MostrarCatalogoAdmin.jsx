@@ -18,7 +18,7 @@ export default function MostrarCatalogoAdmin() {
           
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: 'var(--text-color)' }}>Código del Servicio:</label>
-            <input type="text" value={servicio.id} disabled style={{ width: '100%', padding: '0.8rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem', background: '#f0f0f0', color: '#666' }} />
+            <input type="text" value={servicio.codigo || servicio.id} disabled style={{ width: '100%', padding: '0.8rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem', background: '#f0f0f0', color: '#666' }} />
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
@@ -29,6 +29,11 @@ export default function MostrarCatalogoAdmin() {
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: 'var(--text-color)' }}>Descripción:</label>
             <textarea value={servicio.descripcion} disabled rows="3" style={{ width: '100%', padding: '0.8rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem', background: '#f0f0f0', color: '#666', resize: 'vertical' }}></textarea>
+          </div>
+
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }} > Duración: </label>
+            <input type="text" value={servicio.duracion || 'No especificada'} disabled className="form-control" />
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
