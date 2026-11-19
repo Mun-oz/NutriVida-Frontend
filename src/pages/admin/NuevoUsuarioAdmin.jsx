@@ -1,69 +1,223 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
+import { useAuth } from '../../context/AuthContext';
+import { crearUsuario } from '../../services/usuariosService';
 
 export default function NuevoUsuarioAdmin() {
   const navigate = useNavigate();
-  
+  const { accessToken } = useAuth();
+
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState('');
+
   const [formData, setFormData] = useState({
     nombre: '',
-    correo: '',
-    rol: 'Paciente'
+    email: '',
+    password: '',
+    rol: 'PACIENTE',
+    run: '',
+    region: '',
+    comuna: '',
+    direccion: ''
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    const usuariosDb = JSON.parse(localStorage.getItem('nutrivida_usuarios_db')) || [];
-    
-    const nuevoUsuario = {
-      id: Date.now(),
-      nombre: formData.nombre,
-      correo: formData.correo,
-      rol: formData.rol
-    };
-    
-    usuariosDb.push(nuevoUsuario);
-    localStorage.setItem('nutrivida_usuarios_db', JSON.stringify(usuariosDb));
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-    // Redirección inmediata a la tabla con mensaje de éxito
-    navigate('/admin/usuario', { state: { mensaje: 'Usuario creado exitosamente.' } });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (formData.password.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+
+    setGuardando(true);
+
+    const payload = {
+      nombre: formData.nombre.trim(),
+      email: formData.email.trim(),
+      password: formData.password,
+      rol: formData.rol,
+      run: formData.run.trim() || null,
+      region: formData.region.trim() || null,
+      comuna: formData.comuna.trim() || null,
+      direccion: formData.direccion.trim() || null
+    };
+
+    try {
+      await crearUsuario(payload, accessToken);
+      navigate('/admin/usuario');
+    } catch (err) {
+      if (err.status === 409) {
+        setError(err.message || 'El correo o RUN ya está registrado.');
+      } else if (err.status === 400) {
+        setError('Revisa los datos ingresados (correo válido y contraseña de al menos 8 caracteres).');
+      } else if (err.status === 401) {
+        setError('Tu sesión expiró. Vuelve a iniciar sesión.');
+      } else if (err.status === 403) {
+        setError('No tienes permisos para crear usuarios.');
+      } else {
+        setError(`No se pudo crear el usuario: ${err.message}`);
+      }
+    } finally {
+      setGuardando(false);
+    }
   };
 
   return (
     <>
       <header className="content-header">
-        <h2>Registrar Nuevo Usuario</h2>
+        <h2>Nuevo Usuario</h2>
+        <Link
+          to="/admin/usuario"
+          className="btn-outline"
+          style={{ width: 'auto', marginTop: 0, textDecoration: 'none' }}
+        >
+          ← Volver
+        </Link>
       </header>
-      
-      <div className="content-panel top-panel">
-        <div style={{ background: '#ffffff', padding: '2rem', borderRadius: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', maxWidth: '600px' }}>
-          <form onSubmit={handleSubmit}>
-            
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label htmlFor="nombreUsuario" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: 'var(--text-color)' }}>Nombre Completo:</label>
-              <input type="text" id="nombreUsuario" placeholder="Ej. Ana Soto" value={formData.nombre} onChange={(e) => setFormData({...formData, nombre: e.target.value})} required style={{ width: '100%', padding: '0.8rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem' }} />
+
+      {error && (
+        <div className="alert alert-danger" role="alert">
+          {error}
+        </div>
+      )}
+
+      <div
+        style={{
+          background: '#ffffff',
+          padding: '1.25rem 1.5rem',
+          borderRadius: '8px',
+          boxShadow: '0 4px 10px rgba(0,0,0,0.05)'
+        }}
+      >
+        <form onSubmit={handleSubmit}>
+          <div className="row g-3">
+            <div className="col-md-6">
+              <label className="form-label fw-bold small mb-1">Nombre Completo *</label>
+              <input
+                type="text"
+                name="nombre"
+                className="form-control form-control-sm"
+                maxLength={150}
+                required
+                value={formData.nombre}
+                onChange={handleChange}
+              />
             </div>
 
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label htmlFor="emailUsuario" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: 'var(--text-color)' }}>Correo Electrónico:</label>
-              <input type="email" id="emailUsuario" placeholder="ana.soto@correo.cl" value={formData.correo} onChange={(e) => setFormData({...formData, correo: e.target.value})} required style={{ width: '100%', padding: '0.8rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem' }} />
+            <div className="col-md-6">
+              <label className="form-label fw-bold small mb-1">Correo Electrónico *</label>
+              <input
+                type="email"
+                name="email"
+                className="form-control form-control-sm"
+                required
+                value={formData.email}
+                onChange={handleChange}
+              />
             </div>
 
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label htmlFor="rolUsuario" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: 'var(--text-color)' }}>Asignar Rol:</label>
-              <select id="rolUsuario" value={formData.rol} onChange={(e) => setFormData({...formData, rol: e.target.value})} style={{ width: '100%', padding: '0.8rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem', background: 'white' }}>
-                <option value="Paciente">Paciente</option>
-                <option value="Nutricionista">Nutricionista</option>
-                <option value="Administrador">Administrador</option>
+            <div className="col-md-4">
+              <label className="form-label fw-bold small mb-1">Contraseña (mín. 8 caracteres) *</label>
+              <input
+                type="password"
+                name="password"
+                className="form-control form-control-sm"
+                minLength={8}
+                maxLength={72}
+                required
+                value={formData.password}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="col-md-4">
+              <label className="form-label fw-bold small mb-1">Rol *</label>
+              <select
+                name="rol"
+                className="form-select form-select-sm"
+                required
+                value={formData.rol}
+                onChange={handleChange}
+              >
+                <option value="PACIENTE">PACIENTE</option>
+                <option value="NUTRICIONISTA">NUTRICIONISTA</option>
+                <option value="ADMIN">ADMIN</option>
               </select>
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-              <button type="submit" className="btn-primary" style={{ flex: 1, margin: 0 }}>Guardar Usuario</button>
-              <button type="button" className="btn-outline" onClick={() => navigate('/admin/usuario')} style={{ flex: 1, border: '1px solid var(--border-color)', background: 'transparent', padding: '0.8rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', color: 'var(--text-color)' }}>Cancelar</button>
+            <div className="col-md-4">
+              <label className="form-label fw-bold small mb-1">RUN</label>
+              <input
+                type="text"
+                name="run"
+                className="form-control form-control-sm"
+                placeholder="12345678-9"
+                maxLength={15}
+                value={formData.run}
+                onChange={handleChange}
+              />
             </div>
-          </form>
-        </div>
+
+            <div className="col-md-4">
+              <label className="form-label fw-bold small mb-1">Región</label>
+              <input
+                type="text"
+                name="region"
+                className="form-control form-control-sm"
+                maxLength={100}
+                value={formData.region}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="col-md-4">
+              <label className="form-label fw-bold small mb-1">Comuna</label>
+              <input
+                type="text"
+                name="comuna"
+                className="form-control form-control-sm"
+                maxLength={100}
+                value={formData.comuna}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="col-md-4">
+              <label className="form-label fw-bold small mb-1">Dirección</label>
+              <input
+                type="text"
+                name="direccion"
+                className="form-control form-control-sm"
+                maxLength={200}
+                value={formData.direccion}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem' }}>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={guardando}
+              style={{ width: 'auto', margin: 0, padding: '0.5rem 1.4rem' }}
+            >
+              {guardando ? 'Guardando...' : 'Crear Usuario'}
+            </button>
+            <Link
+              to="/admin/usuario"
+              className="btn-outline"
+              style={{ width: 'auto', margin: 0, padding: '0.5rem 1.4rem', textDecoration: 'none' }}
+            >
+              Cancelar
+            </Link>
+          </div>
+        </form>
       </div>
     </>
   );
