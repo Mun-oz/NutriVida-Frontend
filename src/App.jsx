@@ -60,8 +60,8 @@ function App() {
         <Route path="catalogo/mostrar" element={<MostrarCatalogoAdmin />} />
         <Route path="usuario" element={<UsuarioAdmin />} />
         <Route path="usuario/nuevo" element={<NuevoUsuarioAdmin />} />
-        <Route path="usuario/editar" element={<EditarUsuarioAdmin />} />
-        <Route path="usuario/mostrar" element={<MostrarUsuarioAdmin />} />
+        <Route path="usuario/editar/:id" element={<EditarUsuarioAdmin />} />
+        <Route path="usuario/mostrar/:id" element={<MostrarUsuarioAdmin />} />
         <Route path="reportes" element={<ReportesAdmin />} />
         <Route path="perfil" element={<PerfilAdmin />} />
       </Route>
