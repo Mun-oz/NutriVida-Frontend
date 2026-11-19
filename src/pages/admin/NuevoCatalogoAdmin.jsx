@@ -77,7 +77,7 @@ export default function NuevoCatalogoAdmin() {
 
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
               <label htmlFor="nombreServicio" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: 'var(--text-color)' }}>Nombre del Servicio:</label>
-              <input type="text" id="nombreServicio" placeholder="Ej. maxLength={150} Evaluación Antropométrica" value={formData.nombre} onChange={(e) => setFormData({...formData, nombre: e.target.value})} required style={{ width: '100%', padding: '0.8rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem' }} />
+              <input type="text" id="nombreServicio" placeholder="Ej. Evaluación Antropométrica" maxLength={150} value={formData.nombre} onChange={(e) => setFormData({...formData, nombre: e.target.value})} required style={{ width: '100%', padding: '0.8rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem' }} />
             </div>
 
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
@@ -97,7 +97,7 @@ export default function NuevoCatalogoAdmin() {
             
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
               <label htmlFor="imagenServicio" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: 'var(--text-color)' }}>URL de la Imagen:</label>
-              <input type="text" id="imagenServicio" placeholder="Ej. maxLength={255} consulta_nutri.jpg o https://..." value={formData.imagen} onChange={(e) => setFormData({...formData, imagen: e.target.value})} style={{ width: '100%', padding: '0.8rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem' }} />
+              <input type="text" id="imagenServicio" placeholder="Ej.  consulta_nutri.jpg o https://..." maxLength={255} value={formData.imagen} onChange={(e) => setFormData({...formData, imagen: e.target.value})} style={{ width: '100%', padding: '0.8rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem' }} />
             </div>
             {error && (
               <div className="alert alert-danger" role="alert">
