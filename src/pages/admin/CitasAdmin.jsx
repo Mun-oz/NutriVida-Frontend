@@ -8,8 +8,15 @@ import {
   eliminarCita
 } from '../../services/citasService';
 import { listarServicios } from '../../services/serviciosService';
+import { fechaHoraChile, validarDatosCita } from '../../utils/validacionCitas';
+import { mensajeErrorApi } from '../../utils/mensajesApi';
 
-const ESTADOS = ['PENDIENTE', 'CONFIRMADA', 'CANCELADA', 'COMPLETADA'];
+const TRANSICIONES = {
+  PENDIENTE: ['CONFIRMADA', 'CANCELADA'],
+  CONFIRMADA: ['COMPLETADA', 'CANCELADA'],
+  CANCELADA: [],
+  COMPLETADA: []
+};
 
 const FORM_INICIAL = {
   servicioId: '',
@@ -102,6 +109,16 @@ export default function CitasAdmin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    const mensajeValidacion = validarDatosCita({
+      run: formData.runPaciente, email: formData.emailPaciente,
+      fecha: formData.fecha, hora: formData.hora
+    });
+    if (mensajeValidacion) {
+      setError(mensajeValidacion);
+      return;
+    }
+
     setGuardando(true);
 
     const payload = {
@@ -129,9 +146,9 @@ export default function CitasAdmin() {
       cerrarFormulario();
     } catch (err) {
       if (err.status === 409) {
-        setError('Ya existe una cita para ese servicio en la misma fecha y hora.');
+        setError(mensajeErrorApi(err, 'Ya existe una cita para ese servicio en la misma fecha y hora.'));
       } else if (err.status === 400) {
-        setError('Revisa los datos ingresados (correo válido, fecha igual o posterior a hoy).');
+        setError(mensajeErrorApi(err, 'Revisa el RUN, correo, fecha, hora y los campos obligatorios.'));
       } else if (err.status === 401) {
         setError('Tu sesión expiró. Inicia sesión nuevamente.');
       } else if (err.status === 403) {
@@ -158,7 +175,7 @@ export default function CitasAdmin() {
       } else if (err.status === 403) {
         setError('No tienes permisos para cambiar el estado.');
       } else {
-        setError(`No se pudo actualizar el estado: ${err.message}`);
+        setError(`No se pudo actualizar el estado: ${mensajeErrorApi(err, 'Transición de estado no permitida.')}`);
       }
     }
   };
@@ -185,7 +202,7 @@ export default function CitasAdmin() {
     }
   };
 
-  const hoy = new Date().toISOString().split('T')[0];
+  const hoy = fechaHoraChile().fecha;
 
   return (
     <>
@@ -322,6 +339,8 @@ export default function CitasAdmin() {
                 <label className="form-label fw-bold small mb-1">Hora:</label>
                 <input
                   type="time"
+                  min="09:00"
+                  max="17:59"
                   className="form-control form-control-sm"
                   required
                   value={formData.hora}
@@ -330,6 +349,9 @@ export default function CitasAdmin() {
               </div>
             </div>
 
+            <small className="text-muted d-block mt-2">
+              Las citas se agendan de lunes a viernes, desde las 09:00 hasta antes de las 18:00.
+            </small>
             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
               <button
                 type="submit"
@@ -394,7 +416,7 @@ export default function CitasAdmin() {
                           onChange={(e) => handleCambioEstado(c, e.target.value)}
                           style={{ minWidth: '130px' }}
                         >
-                          {ESTADOS.map((estado) => (
+                          {[c.estado, ...(TRANSICIONES[c.estado] || [])].map((estado) => (
                             <option key={estado} value={estado}>
                               {estado}
                             </option>
