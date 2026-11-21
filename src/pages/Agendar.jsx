@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { listarServicios } from '../services/serviciosService';
 import { crearCita } from '../services/citasService';
+import { fechaHoraChile, validarDatosCita } from '../utils/validacionCitas';
+import { mensajeErrorApi } from '../utils/mensajesApi';
 
 export default function Agendar() {
   const navigate = useNavigate();
@@ -90,6 +92,15 @@ export default function Agendar() {
       return;
     }
 
+    const mensajeValidacion = validarDatosCita({
+      run: formData.rut, email: formData.email,
+      fecha: formData.fecha, hora: formData.hora
+    });
+    if (mensajeValidacion) {
+      setError(mensajeValidacion);
+      return;
+    }
+
     setEnviando(true);
 
     const payload = {
@@ -107,9 +118,9 @@ export default function Agendar() {
       navigate('/gracias', { state: { tipo: 'reserva' } });
     } catch (err) {
       if (err.status === 409) {
-        setError('Ya existe una cita reservada para ese servicio en la fecha y hora seleccionadas.');
+        setError(mensajeErrorApi(err, 'Ya existe una cita reservada para ese servicio en la fecha y hora seleccionadas.'));
       } else if (err.status === 400) {
-        setError('Revisa los datos del formulario (correo válido, fecha igual o posterior a hoy y campos completos).');
+        setError(mensajeErrorApi(err, 'Revisa el RUN, correo, fecha, hora y los campos obligatorios.'));
       } else if (err.status === 404) {
         setError('El servicio seleccionado ya no está disponible.');
       } else {
@@ -120,7 +131,7 @@ export default function Agendar() {
     }
   };
 
-  const hoy = new Date().toISOString().split('T')[0];
+  const hoy = fechaHoraChile().fecha;
 
   return (
     <main className="container my-5 d-block">
@@ -274,6 +285,8 @@ export default function Agendar() {
                       id="agendarHora"
                       name="hora"
                       type="time"
+                      min="09:00"
+                      max="17:59"
                       className="form-control bg-light"
                       value={formData.hora}
                       onChange={handleChange}
@@ -281,6 +294,9 @@ export default function Agendar() {
                     />
                   </div>
                 </div>
+                <p className="text-muted small mb-3">
+                  Atención de lunes a viernes, de 09:00 a 18:00. No se aceptan reservas para horas ya pasadas.
+                </p>
 
                 {error && (
                   <div className="alert alert-danger" role="alert">

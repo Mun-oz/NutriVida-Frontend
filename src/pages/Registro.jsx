@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { validarRut } from '../utils/validadores';
 import { registrarPaciente } from '../services/api';
+import { mensajeErrorApi } from '../utils/mensajesApi';
 
 const datosRegiones = [
   { region: "Región Metropolitana", comunas: ["Santiago", "Providencia", "Maipú"] },
@@ -96,7 +97,7 @@ export default function Registro() {
       if (error.status === 409) {
         alert(error.message);
       } else if (error.status === 400) {
-        alert("Revisa los datos ingresados.");
+        alert(mensajeErrorApi(error, 'Revisa los datos de registro (RUN, correo y campos obligatorios).'));
       } else {
         alert("No se pudo completar el registro. Inténtalo nuevamente.");
       }
