@@ -17,7 +17,6 @@ export default defineConfig({
     {
       name: 'chromium',
       use: {
-        channel: 'msedge', 
         baseURL: 'http://localhost:4173',
         trace: 'on-first-retry',
       },
