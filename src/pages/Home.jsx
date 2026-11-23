@@ -22,7 +22,7 @@ export default function Home() {
             </div>
             <div className="col-md-6">
               <img 
-                src="/assets/img/clinNutri.jpg" 
+                src="/assets/img/clinNutri.png"
                 alt="Clínica NutriVida" 
                 className="img-fluid w-100 h-100" 
                 style={{ objectFit: 'cover', minHeight: '300px' }} 
